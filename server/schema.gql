@@ -1,0 +1,18 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type CreateTokenResponse {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type RefreshTokenResponse {
+  accessToken: String!
+}
+
+type Query {
+  createToken: CreateTokenResponse!
+  ping: Boolean!
+  refreshToken: RefreshTokenResponse!
+}
