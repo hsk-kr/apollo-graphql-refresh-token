@@ -23,6 +23,6 @@ export class AuthResolver {
   @UseGuards(JwtRefreshAuthGuard)
   @Query(() => RefreshTokenResponse)
   async refreshToken(): Promise<RefreshTokenResponse> {
-    return this.refreshToken();
+    return this.authService.refreshToken();
   }
 }

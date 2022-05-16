@@ -9,9 +9,8 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        (req) => req.cookies?.['refresh-token'],
-      ]),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
       secretOrKey: process.env.REFRESH_TOKEN_SECRET,
     });
   }
