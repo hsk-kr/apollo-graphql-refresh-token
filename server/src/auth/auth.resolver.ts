@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Query, Resolver } from '@nestjs/graphql';
+import { Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { CreateTokenResponse, RefreshTokenResponse } from './dto/token';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -9,7 +9,7 @@ import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard';
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
 
-  @Query(() => CreateTokenResponse)
+  @Mutation(() => CreateTokenResponse)
   async createToken(): Promise<CreateTokenResponse> {
     return this.authService.createToken();
   }
@@ -21,7 +21,7 @@ export class AuthResolver {
   }
 
   @UseGuards(JwtRefreshAuthGuard)
-  @Query(() => RefreshTokenResponse)
+  @Mutation(() => RefreshTokenResponse)
   async refreshToken(): Promise<RefreshTokenResponse> {
     return this.authService.refreshToken();
   }

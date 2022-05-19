@@ -12,7 +12,10 @@ type RefreshTokenResponse {
 }
 
 type Query {
-  createToken: CreateTokenResponse!
   ping: Boolean!
+}
+
+type Mutation {
+  createToken: CreateTokenResponse!
   refreshToken: RefreshTokenResponse!
 }
