@@ -8,7 +8,6 @@ import {
   useMutation,
   HttpLink,
   from,
-  DocumentNode,
 } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
@@ -18,18 +17,18 @@ import './App.css';
  * Apollo w/Apollo Links
  */
 
-const generateRefreshTokenLinkOnUnauthError = <RT,>({
-  getRefreshTokenFunc,
-  refreshTokenGql,
+/**
+ * refreshTokenPathName: If the error path equals to refreshTokenPathName, it skips refreshing accessToken.
+ * refreshTokenRequestFunc: IF the UNAUTHENTICATED error occurs, it calls refreshTokenRequestFunc
+ * and then, it retries the operation that has errors, which means taht you need to update accessToken by yourself
+ * to make a retry success.
+ */
+const generateRefreshTokenLinkOnUnauthError = ({
   refreshTokenPathName,
-  removeRefreshTokenFunc,
-  updateAccessToken,
+  refreshTokenRequestFunc,
 }: {
   refreshTokenPathName: string;
-  refreshTokenGql: DocumentNode;
-  getRefreshTokenFunc: () => string;
-  removeRefreshTokenFunc: VoidFunction;
-  updateAccessToken: (data: RT | null | undefined) => void;
+  refreshTokenRequestFunc: () => Promise<void>;
 }) => {
   return [
     onError(({ graphQLErrors, operation, forward }) => {
@@ -42,37 +41,21 @@ const generateRefreshTokenLinkOnUnauthError = <RT,>({
             }
 
             const { getContext, setContext } = operation;
-            const refreshTokenExists = getRefreshTokenFunc();
-            if (refreshTokenExists) {
-              setContext({
-                ...getContext(),
-                headers: {
-                  _needsRefresh: true,
-                },
-              });
+            setContext({
+              ...getContext(),
+              headers: {
+                _needsRefresh: true,
+              },
+            });
 
-              return forward(operation);
-            }
+            return forward(operation);
           }
         }
       }
     }),
     setContext(async (_, previousContext) => {
       if (previousContext?.headers?._needsRefresh) {
-        const refreshToken = getRefreshTokenFunc();
-
-        try {
-          const response = await client.mutate<RT>({
-            mutation: refreshTokenGql,
-            variables: {
-              token: refreshToken,
-            },
-          });
-
-          updateAccessToken(response.data);
-        } catch {
-          removeRefreshTokenFunc();
-        }
+        await refreshTokenRequestFunc();
       }
 
       return previousContext;
@@ -96,35 +79,41 @@ const authLink = setContext((_, previousContext) => {
   };
 });
 
-/**
- * React Components
- */
+const refreshTokenReq = async () => {
+  const refreshToken = localStorage.getItem('refreshToken') || '';
+
+  const response = await client.mutate({
+    mutation: gql`
+      mutation RefreshToken($token: String!) {
+        refreshToken(token: $token) {
+          accessToken
+        }
+      }
+    `,
+    variables: {
+      token: refreshToken,
+    },
+  });
+
+  const { accessToken } = response.data?.refreshToken || {};
+  if (accessToken) localStorage.setItem('accessToken', accessToken);
+};
 
 const client = new ApolloClient({
   link: from([
-    ...generateRefreshTokenLinkOnUnauthError<{
-      refreshToken: { accessToken: string };
-    }>({
-      getRefreshTokenFunc: () => localStorage.getItem('refreshToken') ?? '',
-      refreshTokenGql: gql`
-        mutation RefreshToken($token: String!) {
-          refreshToken(token: $token) {
-            accessToken
-          }
-        }
-      `,
+    ...generateRefreshTokenLinkOnUnauthError({
       refreshTokenPathName: 'refreshToken',
-      removeRefreshTokenFunc: () => localStorage.removeItem('refreshToken'),
-      updateAccessToken: (data) => {
-        const { accessToken } = data?.refreshToken || {};
-        if (accessToken) localStorage.setItem('accessToken', accessToken);
-      },
+      refreshTokenRequestFunc: refreshTokenReq,
     }),
     authLink,
     httpLink,
   ]),
   cache: new InMemoryCache(),
 });
+
+/**
+ * React Components
+ */
 
 function AuthDisplay() {
   const SIGNIN = gql`
