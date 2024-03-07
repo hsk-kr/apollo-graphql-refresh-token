@@ -32,25 +32,24 @@ const generateRefreshTokenLinkOnUnauthError = ({
 }) => {
   return [
     onError(({ graphQLErrors, operation, forward }) => {
-      if (graphQLErrors) {
-        for (const graphQLError of graphQLErrors) {
-          const { path, extensions } = graphQLError;
-          if (extensions.code === 'UNAUTHENTICATED') {
-            if (path?.includes(refreshTokenPathName)) {
-              return;
-            }
+      if (!graphQLErrors) return;
 
-            const { getContext, setContext } = operation;
-            setContext({
-              ...getContext(),
-              headers: {
-                _needsRefresh: true,
-              },
-            });
+      for (const { path, extensions } of graphQLErrors) {
+        if (extensions.code !== 'UNAUTHENTICATED' || !path) continue;
+        if (path.includes(refreshTokenPathName)) break;
 
-            return forward(operation);
-          }
-        }
+        const { getContext, setContext } = operation;
+        const context = getContext();
+
+        setContext({
+          ...context,
+          headers: {
+            ...context?.headers,
+            _needsRefresh: true,
+          },
+        });
+
+        return forward(operation);
       }
     }),
     setContext(async (_, previousContext) => {
@@ -68,7 +67,7 @@ const uri = 'http://localhost:4000';
 const httpLink = new HttpLink({ uri });
 
 const authLink = setContext((_, previousContext) => {
-  const token = localStorage.getItem('accessToken') ?? '';
+  const token = localStorage.getItem('accessToken');
 
   return {
     ...previousContext,
@@ -163,6 +162,7 @@ function AuthDisplay() {
 
     localStorage.setItem('accessToken', data.signIn.accessToken);
     localStorage.setItem('refreshToken', data.signIn.refreshToken);
+
     updateToken();
   }, [data]);
 

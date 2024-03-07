@@ -29,7 +29,7 @@ const secretKey = {
 };
 
 const tokenExpireDateTime = {
-  accessToken: '10s',
+  accessToken: '5s',
   refreshToken: '1d',
 };
 
