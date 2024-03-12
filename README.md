@@ -795,6 +795,8 @@ I defined the `generateRefreshTokenLinkOnUnauthError` function to generate `onEr
 
 You can check the test result and the full code from [my github repository](https://github.com/hsk-kr/apollo-graphql-refresh-token/tree/link).
 
-Although I don't use GraphQL, it was fun to explore the new technology. I hope I find a good place to work soon. I am already excited about the opportunity to learn new things.
+Since the repository I implemented the request token logic using `Observable` received 11 stars, To make this code accessible for the people, I pushed this code to a new branch `link` of the repository. I am really glad that somebody found it helpful. I think this is why people share their experiences in the public. It is genuine enjoyment, right?
 
-I hope you found it helpful and Happy Coding!
+Also, although I don't use GraphQL, it was fun to explore the new technology. I hope I find a good place to work soon. I am already excited about the opportunity to learn new things.
+
+I hope you found it helpful as well and Happy Coding!
